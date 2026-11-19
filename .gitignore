@@ -1,0 +1,61 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dev/
+eggs/
+*.egg-info/
+.dvc/
+.fluff/
+.hypothesis/
+mypy.ini
+pyproject.toml
+.tox/
+.coverage
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+ruff_cache/
+sedimental/
+
+# Environments
+.env
+.venv
+venv/
+ENV/
+env/
+
+# Editors
+.vim/
+*.swp
+*.swo
+*~
+
+# Extracted ISOs
+extracted/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# pyc
+__pycache__/
+*.pyc
+*.pyo
+pyd.pth
+cover/
+htmlcov/
+.pytest_cache/
+.tox/
+.coverage
+```

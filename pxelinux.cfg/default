@@ -1,0 +1,57 @@
+UI menu.c32
+PROMPT 0
+TIMEOUT 100
+
+MENU TITLE Peoplebot-Megabot OS Installer (Legacy BIOS)
+
+LABEL local
+    MENU LABEL Boot from Local Hard Drive
+    LOCALBOOT 0
+
+LABEL iso_0
+    MENU LABEL clonezilla-live-3.1.2-22-i686.iso (Memdisk - 364MB)
+    KERNEL memdisk
+    INITRD isos/clonezilla-live-3.1.2-22-i686.iso
+    APPEND iso raw
+
+LABEL iso_1
+    MENU LABEL clonezilla-live-3.3.3-37-amd64.iso (Low-RAM Extracted)
+    KERNEL extracted/clonezilla-live-3.3.3-37-amd64/live/vmlinuz
+    APPEND initrd=extracted/clonezilla-live-3.3.3-37-amd64/live/initrd.img boot=live union=overlay config components quiet noswap nomodeset fetch=http://192.168.254.2:8085/extracted/clonezilla-live-3.3.3-37-amd64/live/filesystem.squashfs
+
+LABEL iso_2
+    MENU LABEL debian-12.15.0-i386-netinst.iso (Low-RAM Extracted)
+    KERNEL extracted/debian-12.15.0-i386-netinst/install.386/xen/vmlinuz
+    APPEND initrd=extracted/debian-12.15.0-i386-netinst/pool/main/k/kickseed/initrd-kickseed_0.63_all.udeb lowmem/low=1
+
+LABEL iso_3
+    MENU LABEL debian-13.7.0-amd64-DVD-1.iso (Low-RAM Extracted)
+    KERNEL extracted/debian-13.7.0-amd64-DVD-1/install.amd/xen/vmlinuz
+    APPEND initrd=extracted/debian-13.7.0-amd64-DVD-1/pool/main/k/kickseed/initrd-kickseed_0.63_all.udeb lowmem/low=1
+
+LABEL iso_4
+    MENU LABEL debian-13.7.0-amd64-netinst.iso (Low-RAM Extracted)
+    KERNEL extracted/debian-13.7.0-amd64-netinst/install.amd/xen/vmlinuz
+    APPEND initrd=extracted/debian-13.7.0-amd64-netinst/pool/main/k/kickseed/initrd-kickseed_0.63_all.udeb lowmem/low=1
+
+LABEL iso_5
+    MENU LABEL netboot.xyz-multiarch.iso (Memdisk - 3MB)
+    KERNEL memdisk
+    INITRD isos/netboot.xyz-multiarch.iso
+    APPEND iso raw
+
+LABEL iso_6
+    MENU LABEL netboot.xyz.iso (Memdisk - 2MB)
+    KERNEL memdisk
+    INITRD isos/netboot.xyz.iso
+    APPEND iso raw
+
+LABEL iso_7
+    MENU LABEL rescuezilla-2.5-32bit.bionic.iso (Low-RAM Extracted)
+    KERNEL extracted/rescuezilla-2.5-32bit.bionic/casper/vmlinuz
+    APPEND initrd=extracted/rescuezilla-2.5-32bit.bionic/casper/initrd.lz boot=live union=overlay config components quiet noswap nomodeset fetch=http://192.168.254.2:8085/extracted/rescuezilla-2.5-32bit.bionic/casper/filesystem.squashfs
+
+
+SEPARATOR
+
+DEFAULT local

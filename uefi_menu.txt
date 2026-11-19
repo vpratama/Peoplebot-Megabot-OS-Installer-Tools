@@ -1,0 +1,20 @@
+# iPXE UEFI Boot Menu for Peoplebot-Megabot OS Installer
+
+# Boot options: local, ISO memdisk, ISO extracted (Low-RAM)
+
+# Boot from local hard drive (UEFI)
+menu select
+item --key 1 "Boot from Local Drive"
+chain --sda1
+
+# Boot from small ISOs via memdisk (UEFI)
+item --key 2 "Memdisk Boot"
+chain --loaded1 || echo No memdisk loaded
+
+# Boot from large ISOs - Low-RAM mode (UEFI)
+item --key 3 "Low-RAM Extracted"
+set booturl http://${server_ip}:${http_port}
+chain http://${server_ip}:${http_port}/boot/loader/entries/conf.lst
+
+# Press ESC to enter iPXE shell
+esc

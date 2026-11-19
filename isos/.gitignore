@@ -1,0 +1,7 @@
+# Ignore ISO files
+*.iso
+# Ignore checksum files if present
+*.md5
+*.sha256
+# But keep the folder structure
+!*/

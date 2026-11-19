@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+    lang="en" dir="ltr">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>
+        iPXE - open source boot firmware        [start]
+    </title>
+
+    <meta name="generator" content="DokuWiki"/>
+<meta name="robots" content="index,follow"/>
+<meta name="keywords" content="start"/>
+<link rel="search" type="application/opensearchdescription+xml" href="/lib/exe/opensearch.php" title="iPXE - open source boot firmware"/>
+<link rel="start" href="/"/>
+<link rel="contents" href="/start?do=index" title="Sitemap"/>
+<link rel="manifest" href="/lib/exe/manifest.php"/>
+<link rel="alternate" type="application/rss+xml" title="Recent Changes" href="/feed.php"/>
+<link rel="alternate" type="application/rss+xml" title="Current namespace" href="/feed.php?mode=list&amp;ns="/>
+<link rel="alternate" type="text/html" title="Plain HTML" href="/_export/xhtml/start"/>
+<link rel="alternate" type="text/plain" title="Wiki Markup" href="/_export/raw/start"/>
+<link rel="canonical" href="https://ipxe.org/"/>
+<link rel="stylesheet" type="text/css" href="/lib/exe/css.php?t=doogiestpl&amp;tseed=c353b386e7712527745f967265a28687"/>
+<!--[if gte IE 9]><!-->
+<script type="text/javascript">/*<![CDATA[*/var NS='';var JSINFO = {"id":"start","namespace":"","ACT":"show","useHeadingNavigation":0,"useHeadingContent":0};
+/*!]]>*/</script>
+<script type="text/javascript" charset="utf-8" src="/lib/exe/jquery.php?tseed=23f888679b4f1dc26eef34902aca964f"></script>
+<script type="text/javascript" charset="utf-8" src="/lib/exe/js.php?t=doogiestpl&amp;tseed=c353b386e7712527745f967265a28687"></script>
+<!--<![endif]-->
+    <link rel="shortcut icon" href="/lib/tpl/doogiestpl/images/favicon.ico" />
+<link rel="apple-touch-icon" href="/lib/tpl/doogiestpl/images/apple-touch-icon.png" />
+    </head>
+
+<body>
+<div class="dokuwiki ">
+
+    <!-- login state -->
+    <div class="user">
+            </div>
+
+    <!--  breadcrumbs -->
+    
+    
+    <div class="clearer"></div>
+
+    
+    <div class="stylehead">
+        <div class="header">
+            <div class="logo">
+                <a href="/start"  name="dokuwiki__top" id="dokuwiki__top" accesskey="h" title="[ALT+H]">iPXE - open source boot firmware</a>            </div>
+            <div class="tools">
+                <div class="pagename">
+                    <!-- mcb30 - removed backlinks and replaced with logo -->
+                    <a href="/start"  name="dokuwiki__logo" id="dokuwiki__logo"><img src="/_media/logos/ipxe-small.png" width="159" height="105" alt="iPXE logo" /></a>                </div>
+            </div>
+
+                            <div class="clearer"></div>
+                <div class="tabnav" id="tab__nav">
+                    <ul>
+<li class="level1"><div class="li"> <span class="curid"><a href="/start" class="wikilink1" title="start">Home</a></span></div>
+</li>
+<li class="level1"><div class="li"> <a href="/download" class="wikilink1" title="download">Download</a></div>
+</li>
+<li class="level1"><div class="li"> <a href="/pics" class="wikilink1" title="pics">Screenshots</a></div>
+</li>
+<li class="level1"><div class="li"> <a href="/docs" class="wikilink1" title="docs">Documentation</a></div>
+</li>
+<li class="level1"><div class="li"> <a href="/faq" class="wikilink1" title="faq">FAQ</a></div>
+</li>
+<li class="level1"><div class="li"> <a href="/contact" class="wikilink1" title="contact">Contact</a></div>
+</li>
+</ul>
+                </div>
+            
+            <div class="clearer"></div>
+                    </div>
+    </div>
+    
+    
+    <div class="page">
+        <!-- ......... wikipage start ......... -->
+        
+<h1 id="ipxe">iPXE</h1>
+<div class="level1">
+
+<p>
+<a href="/_detail/screenshots/menu_graphic.png?id=start" class="media" title="screenshots:menu_graphic.png"><img src="/_media/screenshots/menu_graphic.png?w=400&amp;h=300&amp;tok=79b238" class="mediaright" title="Screenshot" alt="Screenshot" width="400" height="300" /></a>
+</p>
+
+<p>
+iPXE is the leading open source network boot firmware.  It provides a full PXE implementation enhanced with additional features such as:
+</p>
+<ul>
+<li class="level1"><div class="li"> boot from a web server via <abbr title="Hyper Text Transfer Protocol">HTTP</abbr></div>
+</li>
+</ul>
+<ul>
+<li class="level1"><div class="li"> boot from an iSCSI SAN</div>
+</li>
+</ul>
+<ul>
+<li class="level1"><div class="li"> boot from a Fibre Channel SAN via FCoE</div>
+</li>
+</ul>
+<ul>
+<li class="level1"><div class="li"> boot from an AoE SAN</div>
+</li>
+</ul>
+<ul>
+<li class="level1"><div class="li"> boot from a wireless network</div>
+</li>
+</ul>
+<ul>
+<li class="level1"><div class="li"> boot from a wide-area network</div>
+</li>
+</ul>
+<ul>
+<li class="level1"><div class="li"> boot from an Infiniband network</div>
+</li>
+</ul>
+<ul>
+<li class="level1"><div class="li"> control the boot process with a <a href="/scripting" class="wikilink1" title="scripting">script</a></div>
+</li>
+</ul>
+
+<p>
+You can use iPXE to <a href="/howto/romburning" class="wikilink1" title="howto:romburning">replace the existing PXE ROM on your network card</a>, or you can <a href="/howto/chainloading" class="wikilink1" title="howto:chainloading">chainload into iPXE</a> to obtain the features of iPXE without the hassle of reflashing.
+</p>
+
+<p>
+iPXE is free, open-source software <a href="/licensing" class="wikilink1" title="licensing">licensed</a> under the GNU <abbr title="GNU General Public License">GPL</abbr> (with some portions under <abbr title="GNU General Public License">GPL</abbr>-compatible licences), and is included in products from several network card manufacturers and OEMs.
+</p>
+
+<p>
+<a href="/_detail/clipart/bootroms.jpeg?id=start" class="media" title="clipart:bootroms.jpeg"><img src="/_media/clipart/bootroms.jpeg?w=350&amp;h=190&amp;tok=7ed54d" class="mediacenter" title="Some PXE ROMs" alt="Some PXE ROMs" width="350" height="190" /></a>
+</p>
+
+</div>
+
+<h1 id="quick_start">Quick start</h1>
+<div class="level1">
+
+<p>
+The easiest way to start experimenting with iPXE is to use the <a href="http://boot.ipxe.org/ipxe.iso" class="urlextern" title="http://boot.ipxe.org/ipxe.iso">bootable ISO image</a>.  Burn the <abbr title="International Organization for Standardization">ISO</abbr> image to a CD-ROM (or DVD-ROM) and boot from it.  You should soon see a welcome banner such as:
+</p>
+<pre class="code">  iPXE -- Open Source Network Boot Firmware -- http://ipxe.org
+  Features: HTTP iSCSI DNS TFTP AoE FCoE TFTP COMBOOT ELF PXE PXEXT
+  
+  Press Ctrl-B for the iPXE command line...</pre>
+
+<p>
+<a href="/_detail/clipart/cdrom.jpeg?id=start" class="media" title="clipart:cdrom.jpeg"><img src="/_media/clipart/cdrom.jpeg?w=200&amp;h=200&amp;tok=104eee" class="mediaright" title="A CD-ROM" alt="A CD-ROM" width="200" height="200" /></a>
+</p>
+
+<p>
+Press <code>Ctrl-B</code> at this point, and you should reach the iPXE <a href="/cmdline" class="wikilink1" title="cmdline">command line</a>:
+</p>
+<pre class="code">  iPXE&gt;</pre>
+
+<p>
+You can list the network devices that iPXE has detected using the <code><a href="/cmd/ifstat" class="wikilink1" title="cmd:ifstat">ifstat</a></code> command:
+</p>
+<pre class="code">  iPXE&gt; ifstat
+  net0: 52:54:00:12:34:56 using rtl8139 on PCI00:03.0 (Ethernet) [closed]
+    [Link:up, TX:0 TXE:0 RX:0 RXE:0]</pre>
+
+<p>
+and acquire an IP address using the <code><a href="/cmd/dhcp" class="wikilink1" title="cmd:dhcp">dhcp</a></code> command:
+</p>
+<pre class="code">  iPXE&gt; dhcp
+  DHCP (net0 52:54:00:12:34:56).... ok</pre>
+
+<p>
+You can examine the IP configuration and other <abbr title="Dynamic Host Configuration Protocol">DHCP</abbr> options:
+</p>
+<pre class="code">  iPXE&gt; route
+  net0: 10.0.0.155/255.255.255.0 gw 10.0.0.1
+  iPXE&gt; show dns
+  net0.dhcp/dns:ipv4 = 10.0.0.6</pre>
+
+<p>
+You can boot something over the network.  Unlike a traditional PXE ROM, iPXE is able to boot over a wide area network such as the Internet.  If the machine you are testing is connected to the Internet, you can boot the iPXE <a href="http://boot.ipxe.org/demo/boot.php" class="urlextern" title="http://boot.ipxe.org/demo/boot.php">demonstration script</a>:
+</p>
+<pre class="code">  iPXE&gt; chain http://boot.ipxe.org/demo/boot.php</pre>
+
+<p>
+<a href="/_detail/screenshots/ipxedemo.png?id=start" class="media" title="screenshots:ipxedemo.png"><img src="/_media/screenshots/ipxedemo.png?w=360&amp;h=200&amp;tok=9eb4c7" class="mediacenter" title="iPXE demonstration image" alt="iPXE demonstration image" width="360" height="200" /></a>
+</p>
+
+</div>
+
+        <!-- ......... wikipage stop  ......... -->
+    </div>
+
+    <div class="clearer"></div>
+
+    
+
+    <!-- footer -->
+    <div class="stylefoot">
+
+        
+        <div class="bar" id="bar__bottom">
+            <!-- page metadata -->
+            <div class="meta">
+                <div class="doc">
+                    <bdi>start.txt</bdi> · Last modified: 2021/01/26 21:13 by <bdi>mcb30</bdi>                </div>
+            </div>
+
+                            <!-- page actions -->
+                <div class="bar-left" id="bar__bottomleft">
+                    <form class="button btn_login" method="get" action="/start"><div class="no"><input type="hidden" name="do" value="login" /><input type="hidden" name="sectok" value="" /><button type="submit" title="Log In">Log In</button></div></form>                </div>
+
+                <!-- search form -->
+                <div class="bar-right" id="bar__bottomright">
+                    <div class="searchbox">
+                        <form action="/start" method="get" role="search" class="search doku_form" id="dw__search" accept-charset="utf-8"><input type="hidden" name="do" value="search" /><input type="hidden" name="id" value="start" /><div class="no"><input name="q" type="text" class="edit" title="[F]" accesskey="f" placeholder="Search" autocomplete="on" id="qsearch__in" value="" /><button value="1" type="submit" title="Search">Search</button><div id="qsearch__out" class="ajax_qsearch JSpopup"></div></div></form>                    </div>
+                </div>
+
+                <div class="clearer"></div>
+            
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="footerinc">
+
+    <a  href="/feed.php" title="Recent changes RSS feed"><img src="/lib/tpl/doogiestpl/images/button-rss.png" width="80" height="15" alt="Recent changes RSS feed" /></a>
+
+    <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license"><img src="/lib/images/license/button/cc-by-sa.png" alt="CC Attribution-Share Alike 4.0 International" /></a>
+    <a  href="https://dokuwiki.org/" title="Driven by DokuWiki"><img src="/lib/tpl/doogiestpl/images/button-dw.png" width="80" height="15" alt="Driven by DokuWiki" /></a>
+
+    
+</div>
+
+<!-- mcb30 - added CC attribution footer -->
+<div class="dokuwiki">
+  <div class="meta">
+    <div class="doc">
+      All uses of this content must include an attribution to the iPXE
+      project and the URL https://ipxe.org
+    </div>
+    <div class="doc">
+      References to "iPXE" may not be altered or removed.
+    </div>
+  </div>
+</div>
+
+<div class="no">
+    <img src="/lib/exe/indexer.php?id=start&amp;1795095754" width="2" height="1" alt="" /></div>
+
+</body>
+</html>
