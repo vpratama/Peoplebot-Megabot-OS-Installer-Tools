@@ -1,4 +1,8 @@
 # Peoplebot-Megabot OS Installer Tools
+<p align="center">
+  <img src="https://github.com/vpratama/Peoplebot-Megabot-OS-Installer-Tools/blob/main/logo.bmp?raw=true" alt="Peoplebot-Megabot"/>
+</p>
+
 
 ## Ringkasan
 
