@@ -60,7 +60,7 @@ SERVER_IP   = os.getenv("PXE_SERVER_IP", "192.168.254.2")
 DHCP_START  = os.getenv("PXE_DHCP_START", "192.168.254.100")
 DHCP_END    = os.getenv("PXE_DHCP_END", "192.168.254.200")
 HTTP_PORT   = int(os.getenv("PXE_HTTP_PORT", "8085"))
-MAX_MEMDISK_MB = int(os.getenv("PXE_MAX_MEMDISK_MB", "150"))
+MAX_MEMDISK_MB = int(os.getenv("PXE_MAX_MEMDISK_MB", "300"))
 
 # ── Bundled dnsmasq (no host install required) ──────────────────────────────────
 # Path to the bundled dnsmasq binary (dynamically linked against glibc, which

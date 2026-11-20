@@ -66,7 +66,7 @@ tftp/
 
 | Ukuran ISO | Metode Boot | Keterangan |
 |------------|-------------|------------|
-| ≤ `PXE_MAX_MEMDISK_MB` (default 150 MB) | **Memdisk** | ISO dimuat penuh ke RAM |
+| ≤ `PXE_MAX_MEMDISK_MB` (default 300 MB) | **Memdisk** | ISO dimuat penuh ke RAM |
 | > `PXE_MAX_MEMDISK_MB` | **Low-RAM Extracted** | ISO diekstrak, kernel/initrd dimuat via HTTP |
 
 ### 2. Menu yang Dihasilkan
@@ -118,8 +118,7 @@ Tempatkan file `.iso` di dalam folder `isos/`. File ISO tidak akan ter-commit ke
 ### 4. Jalankan skrip
 
 ```bash
-cd /path/ke/tftp
-python3 isolisting.py
+python isolisting.py
 ```
 
 Skrip akan:
@@ -138,7 +137,7 @@ Tekan **Ctrl+C** untuk menghentikan semua layanan dengan bersih.
 
 | Variabel | Default | Deskripsi |
 |----------|---------|-----------|
-| `TFTP_DIR` | `/home/luminaire/Downloads/tftp` | Folder dasar proyek |
+| `TFTP_DIR` | `/home/user/tftp` | Folder dasar proyek |
 | `ISO_DIR_NAME` | `isos` | Folder file ISO |
 | `EXTRACT_DIR_NAME` | `extracted` | Folder hasil ekstraksi |
 | `CFG_DIR_NAME` | `pxelinux.cfg` | Folder konfigurasi PXE |
@@ -151,7 +150,7 @@ Tekan **Ctrl+C** untuk menghentikan semua layanan dengan bersih.
 | `PXE_DHCP_START` | `192.168.254.100` | Awal rentang DHCP |
 | `PXE_DHCP_END` | `192.168.254.200` | Akhir rentang DHCP |
 | `PXE_HTTP_PORT` | `8085` | Port HTTP streaming |
-| `PXE_MAX_MEMDISK_MB` | `150` | Batas ukuran ISO untuk memdisk |
+| `PXE_MAX_MEMDISK_MB` | `300` | Batas ukuran ISO untuk memdisk |
 | `DNSMASQ_BIN` | *(kosong)* | Path binary dnsmasq (kosong = gunakan bundled) |
 | `DNSMASQ_SRC_URL` | thekelleys.org.uk | Sumber source dnsmasq jika perlu build ulang |
 
@@ -206,7 +205,7 @@ Hapus file tersebut, lalu jalankan ulang skrip — file akan diunduh ulang otoma
 
 ```bash
 rm -f ipxe.efi shimx64.efi mmx64.efi grubx64.efi
-python3 isolisting.py
+python isolisting.py
 ```
 
 ---
