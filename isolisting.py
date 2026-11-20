@@ -1,6 +1,7 @@
 # Peoplebot-Megabot OS Installer Tools
 # PXE Boot ISO Menu Generator - Legacy BIOS, Modern BIOS, UEFI BIOS, and UEFI Secure Boot
 
+import ipaddress
 import os
 import shutil
 import signal
@@ -62,6 +63,8 @@ INTERFACE   = os.getenv("PXE_INTERFACE", "enp45s0")
 SERVER_IP   = os.getenv("PXE_SERVER_IP", "192.168.254.2")
 DHCP_START  = os.getenv("PXE_DHCP_START", "192.168.254.100")
 DHCP_END    = os.getenv("PXE_DHCP_END", "192.168.254.200")
+PXE_DHCP_MODE = os.getenv("PXE_DHCP_MODE", "full")
+PXE_DHCP_LEASE_TIME = os.getenv("PXE_DHCP_LEASE_TIME", "12h")
 HTTP_PORT   = int(os.getenv("PXE_HTTP_PORT", "8085"))
 MAX_MEMDISK_MB = int(os.getenv("PXE_MAX_MEMDISK_MB", "300"))
 
@@ -76,19 +79,80 @@ DNSMASQ_SRC_URL = os.getenv(
     "DNSMASQ_SRC_URL", "https://thekelleys.org.uk/dnsmasq/dnsmasq-2.93.tar.xz"
 )
 
+# Build dnsmasq arguments based on DHCP mode
+# "full"     = dnsmasq is the DHCP server AND provides PXE boot files via TFTP.
+#              IP addresses are allocated from PXE_DHCP_START - PXE_DHCP_END
+#              with PXE_DHCP_LEASE_TIME.
+# "pxe_only" = dnsmasq runs as a proxyDHCP server. It does NOT assign IP
+#              addresses and does NOT advertise a gateway/router; the external
+#              DHCP server does all of that. dnsmasq only replies to PXE clients
+#              with the boot filename and TFTP server address, then serves the
+#              boot files over TFTP. This avoids "gateway inaccessible" and
+#              "no such file" errors caused by a second DHCP server on the
+#              wrong subnet.
+if PXE_DHCP_MODE == "full":
+    DHCP_RANGE = f"--dhcp-range={DHCP_START},{DHCP_END},255.255.255.0,{PXE_DHCP_LEASE_TIME}"
+    DHCP_FILES = True
+else:
+    # proxyDHCP mode: the proxy range must be on the SAME subnet as the
+    # external DHCP server / PXE server IP. Derive it from PXE_SERVER_IP so
+    # it always matches the live network (e.g. 192.168.1.110 -> 192.168.1.0).
+    try:
+        _proxy_net = ipaddress.ip_network(f"{SERVER_IP}/24", strict=False)
+        _proxy_net_addr = str(_proxy_net.network_address)
+    except ValueError:
+        # Fallback if PXE_SERVER_IP is not a valid IPv4 address
+        _proxy_net_addr = ".".join(DHCP_START.split(".")[:3]) + ".0"
+    DHCP_RANGE = f"--dhcp-range={_proxy_net_addr},proxy"
+    # No lease file / no IP management - external DHCP handles addressing
+    DHCP_FILES = False
+
 DNSMASQ_ARGS = [
     DNSMASQ_BIN,
     "-d",
     "-i",
     INTERFACE,
     "--bind-interfaces",
-    f"--dhcp-range={DHCP_START},{DHCP_END},255.255.255.0,12h",
-    "--dhcp-boot=pxelinux.0",
+]
+if DHCP_RANGE:
+    DNSMASQ_ARGS.append(DHCP_RANGE)
+
+# Architecture detection + boot filename (option 67).
+# Both modes send --dhcp-boot: UEFI clients load ipxe.efi, BIOS loads pxelinux.0.
+DNSMASQ_ARGS += [
+    "--dhcp-match=set:bios,option:client-arch,0",
+    "--dhcp-match=set:efi32,option:client-arch,6",
+    "--dhcp-match=set:efi64,option:client-arch,7",
+    "--dhcp-match=set:efi64,option:client-arch,9",
+    f"--dhcp-boot=tag:bios,pxelinux.0,,{SERVER_IP}",
+    f"--dhcp-boot=tag:efi32,ipxe.efi,,{SERVER_IP}",
+    f"--dhcp-boot=tag:efi64,ipxe.efi,,{SERVER_IP}",
+    f"--dhcp-boot=pxelinux.0,,{SERVER_IP}",
+]
+
+if PXE_DHCP_MODE != "full":
+    # proxyDHCP mode: per dnsmasq docs, proxyDHCP ALSO needs --pxe-prompt and
+    # --pxe-service to advertise boot services to PXE firmware.
+    # --dhcp-pxe-vendor accepts "iPXE" vendor class (used by VirtualBox).
+    DNSMASQ_ARGS += [
+        "--dhcp-pxe-vendor=PXEClient,iPXE",
+        "--pxe-prompt=Peoplebot-Megabot PXE Boot,1",
+        # basename "pxelinux" -> dnsmasq/PXE appends the ".0" layer suffix
+        f"--pxe-service=x86PC,BIOS - pxelinux,pxelinux,{SERVER_IP}",
+        # full filenames with a suffix (ipxe.efi) are used as-is
+        f"--pxe-service=X86-64_EFI,UEFI - iPXE,ipxe.efi,{SERVER_IP}",
+        f"--pxe-service=IA32_EFI,UEFI 32-bit - iPXE,ipxe.efi,{SERVER_IP}",
+    ]
+
+DNSMASQ_ARGS += [
     f"--tftp-root={TFTP_DIR}",
     "--enable-tftp",
+]
+if DHCP_FILES:
     # Keep all state inside the project folder — no writes to /var needed
-    f"--dhcp-leasefile={os.path.join(TFTP_DIR, 'dnsmasq.leases')}",
-    f"--pid-file={os.path.join(TFTP_DIR, 'dnsmasq.pid')}",
+    DNSMASQ_ARGS.append(f"--dhcp-leasefile={os.path.join(TFTP_DIR, 'dnsmasq.leases')}")
+    DNSMASQ_ARGS.append(f"--pid-file={os.path.join(TFTP_DIR, 'dnsmasq.pid')}")
+DNSMASQ_ARGS += [
     "--port=0",
 ]
 
@@ -154,6 +218,34 @@ def stop_existing_dnsmasq():
         print(f"Warning: could not stop existing dnsmasq: {e}")
 
 
+def print_pxe_diagnostics():
+    """Print the active PXE configuration and check critical boot files."""
+    print("\n" + "=" * 70)
+    print("PXE SERVER DIAGNOSTICS")
+    print("=" * 70)
+    print(f"  Mode:              {PXE_DHCP_MODE}")
+    print(f"  Interface:         {INTERFACE}")
+    print(f"  PXE Server IP:     {SERVER_IP}")
+    if PXE_DHCP_MODE == "full":
+        print(f"  DHCP IP Range:     {DHCP_START} - {DHCP_END}")
+        print(f"  DHCP Lease Time:   {PXE_DHCP_LEASE_TIME}")
+    else:
+        print(f"  DHCP:              proxyDHCP (IPs come from external DHCP)")
+    print(f"  TFTP Root:         {TFTP_DIR}")
+    print(f"  HTTP Port:         {HTTP_PORT}")
+    print(f"  Boot files check:")
+    for fname in ("pxelinux.0", "menu.c32", "ldlinux.c32", "ipxe.efi",
+                  "undionly.kpxe", "ipxe.pxe"):
+        fpath = os.path.join(TFTP_DIR, fname)
+        status = "OK" if (os.path.isfile(fpath) and os.path.getsize(fpath) > 1024) else "MISSING"
+        print(f"    [{status:>7}] {fname}")
+    print("  NOTE for VirtualBox:")
+    print("    - Network adapter MUST be 'Bridged Adapter' (not NAT), bridged to:")
+    print(f"      {INTERFACE}")
+    print("    - NAT mode blocks PXE broadcasts and makes the gateway unreachable.")
+    print("=" * 70 + "\n")
+
+
 def start_dnsmasq_with_gui_auth():
     """Start the bundled dnsmasq via pkexec/sudo, prompting for admin rights."""
     global dnsmasq_proc, DNSMASQ_ARGS
@@ -167,6 +259,7 @@ def start_dnsmasq_with_gui_auth():
 
     cmd = _privilege_prefix(DNSMASQ_ARGS)
 
+    print_pxe_diagnostics()
     print(f"Starting dnsmasq: {DNSMASQ_BIN}")
     print("Requesting administrator privileges...")
     dnsmasq_proc = subprocess.Popen(
@@ -397,26 +490,95 @@ def ensure_boot_files():
 
 
 
-def extract_iso_if_needed(iso_name):
+def safe_extract_name(iso_name):
+    """Return the directory name used for an ISO's extracted content."""
+    return os.path.splitext(iso_name)[0].replace(" ", "_")
+
+
+def get_iso_signatures():
+    """Map each ISO filename to a fingerprint so we detect replaced ISOs.
+
+    Uses size, mtime, ctime (inode change time) and inode number so a file
+    replaced with a new one is detected even if its timestamp was preserved.
+    """
+    sigs = {}
+    try:
+        for name in sorted(os.listdir(ISO_DIR)):
+            if name.lower().endswith(".iso"):
+                p = os.path.join(ISO_DIR, name)
+                st = os.stat(p)
+                sigs[name] = (st.st_size, st.st_mtime_ns, st.st_ctime_ns, st.st_ino)
+    except OSError:
+        pass
+    return sigs
+
+
+def remove_extracted_iso(iso_name):
+    """Delete the extracted directory for a single ISO."""
+    safe_name = safe_extract_name(iso_name)
+    target_dir = os.path.join(EXTRACT_DIR, safe_name)
+    if os.path.isdir(target_dir):
+        print(f"  Removing old extracted data: {safe_name}")
+        shutil.rmtree(target_dir, ignore_errors=True)
+
+
+def clean_all_extracted_isos():
+    """Delete ALL extracted ISO directories (used on script startup)."""
+    if not os.path.isdir(EXTRACT_DIR):
+        return
+    print("Cleaning all previously extracted ISOs...")
+    for name in sorted(os.listdir(EXTRACT_DIR)):
+        path = os.path.join(EXTRACT_DIR, name)
+        if os.path.isdir(path):
+            print(f"  Deleting: {name}")
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+    print("  Done. All ISOs will be re-extracted fresh.\n")
+
+
+def extract_iso_if_needed(iso_name, force=False):
+    """Extract an ISO's boot files, showing progress on screen.
+
+    If force=True, any existing extracted directory is deleted first so the
+    ISO is extracted fresh (used when a new/changed ISO is detected).
+    """
     iso_path = os.path.join(ISO_DIR, iso_name)
-    safe_name = os.path.splitext(iso_name)[0].replace(" ", "_")
+    safe_name = safe_extract_name(iso_name)
     target_dir = os.path.join(EXTRACT_DIR, safe_name)
     marker = os.path.join(target_dir, ".done")
 
-    if os.path.exists(marker):
+    if os.path.exists(marker) and not force:
         return safe_name
 
+    if force and os.path.isdir(target_dir):
+        print(f"  Removing old extracted data: {safe_name}")
+        shutil.rmtree(target_dir, ignore_errors=True)
+
     os.makedirs(target_dir, exist_ok=True)
-    print(f"Extracting boot files from {iso_name} for low-RAM PXE...")
-    subprocess.run(
-        ["bsdtar", "-xf", iso_path, "-C", target_dir],
+    print(f"\nExtracting boot files from {iso_name} for low-RAM PXE...")
+    print(f"  Source: {iso_path}")
+    print(f"  Target: {target_dir}")
+    print("  Files (bsdtar -xvf):")
+
+    start_time = time.time()
+    result = subprocess.run(
+        ["bsdtar", "-xvf", iso_path, "-C", target_dir],
         check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
     )
+    elapsed = time.time() - start_time
+
+    if result.returncode != 0:
+        print(f"  Warning: bsdtar exited with code {result.returncode}")
+        shutil.rmtree(target_dir, ignore_errors=True)
+        return safe_name
 
     with open(marker, "w", encoding="utf-8") as f:
         f.write("ok")
+    print(f"  ✓ Extraction complete in {elapsed:.1f}s\n")
     return safe_name
 
 
@@ -470,7 +632,8 @@ def detect_boot_params(safe_name):
     return kernel_rel, f"initrd={initrd_rel} lowmem/low=1 acpi=off"
 
 
-def generate_pxe_menu():
+def generate_pxe_menu(force_extract=None):
+    force_extract = force_extract or set()
     isos = sorted(
         [f for f in os.listdir(ISO_DIR) if f.lower().endswith(".iso")]
     )
@@ -494,7 +657,8 @@ def generate_pxe_menu():
         size_mb = os.path.getsize(iso_path) / (1024 * 1024)
 
         # Default: extract ISO for low-RAM boot (always available)
-        safe_name = extract_iso_if_needed(iso)
+        # Force re-extract when this ISO was added or changed
+        safe_name = extract_iso_if_needed(iso, force=(iso in force_extract))
         boot_info = detect_boot_params(safe_name)
         if boot_info:
             kernel_rel, append_args = boot_info
@@ -571,6 +735,60 @@ class ReuseAddrTCPServer(TCPServer):
 
 
 def start_http_server():
+    """Start the HTTP server for squashfs streaming.
+    
+    Automatically attempts to kill any existing process using the HTTP port,
+    then binds and starts the server with SO_REUSEADDR to handle TIME_WAIT state.
+    """
+    import socket
+    import subprocess
+    
+    # Attempt to kill any existing process using the HTTP port
+    try:
+        # Find process using the port (fuser or lsof)
+        result = subprocess.run(
+            ["fuser", f"{HTTP_PORT}/tcp"],
+            capture_output=True, text=True,
+        )
+        pids = result.stdout.strip().split()
+        if pids:
+            print(f"Found process(es) using port {HTTP_PORT}: {pids}")
+            for pid in pids:
+                try:
+                    subprocess.run(
+                        ["kill", "-9", pid],
+                        capture_output=True, check=False,
+                    )
+                    print(f"Killed PID {pid}")
+                except Exception:
+                    pass
+        else:
+            # Try lsof as alternative
+            result2 = subprocess.run(
+                ["lsof", "-i", f":{HTTP_PORT}", "-t"],
+                capture_output=True, text=True,
+            )
+            pids = result2.stdout.strip().split()
+            if pids:
+                print(f"Found process(es) using lsof: {pids}")
+                for pid in pids:
+                    try:
+                        subprocess.run(
+                            ["kill", "-9", pid],
+                            capture_output=True, check=False,
+                        )
+                        print(f"Killed PID {pid}")
+                    except Exception:
+                        pass
+    except Exception as e:
+        print(f"Could not check for existing processes: {e}")
+    
+    # Give a moment for port to be released
+    import time
+    time.sleep(0.5)
+    
+    # Create server with allow_reuse_address set True
+    # This sets SO_REUSEADDR to handle TIME_WAIT state
     server = ReuseAddrTCPServer(("0.0.0.0", HTTP_PORT), QuietHandler)
     print(
         f"HTTP server streaming extracted boot files on port {HTTP_PORT}..."
@@ -600,6 +818,9 @@ if __name__ == "__main__":
     os.makedirs(EXTRACT_DIR, exist_ok=True)
     os.makedirs(CFG_DIR, exist_ok=True)
 
+    # Delete all extracted ISOs on startup so they are re-extracted fresh
+    clean_all_extracted_isos()
+
     # 2. Ensure necessary boot files are present
     print("Checking and downloading necessary PXE boot files...")
     ensure_boot_files()
@@ -608,17 +829,35 @@ if __name__ == "__main__":
     threading.Thread(target=start_http_server, daemon=True).start()
 
     # 4. Watch ISOs folder and update PXE menu
-    last_isos = None
+    # Track (size, mtime) per ISO so we can detect added, replaced or removed ISOs
+    last_iso_sigs = None
     print(f"Watching {ISO_DIR} for ISOs (Ctrl+C to stop all services)...")
     while True:
         if dnsmasq_proc.poll() is not None:
             print("dnsmasq stopped unexpectedly. Exiting.")
             break
 
-        current_isos = sorted(
-            [f for f in os.listdir(ISO_DIR) if f.lower().endswith(".iso")]
-        )
-        if current_isos != last_isos:
-            generate_pxe_menu()
-            last_isos = current_isos
+        current_sigs = get_iso_signatures()
+        if current_sigs != last_iso_sigs:
+            force_extract = set()
+
+            if last_iso_sigs is not None:
+                # New or replaced ISO -> delete its old extracted data and re-extract
+                for name, sig in current_sigs.items():
+                    if name not in last_iso_sigs:
+                        print(f"New ISO detected: {name}")
+                        force_extract.add(name)
+                    elif last_iso_sigs[name] != sig:
+                        print(f"ISO changed (replaced): {name}")
+                        force_extract.add(name)
+
+                # Removed ISO -> delete its extracted data too
+                for name in last_iso_sigs:
+                    if name not in current_sigs:
+                        print(f"ISO removed: {name}")
+                        remove_extracted_iso(name)
+
+            # On first run all ISOs are freshly extracted (dirs were cleaned on start)
+            generate_pxe_menu(force_extract=force_extract)
+            last_iso_sigs = current_sigs
         time.sleep(2)
