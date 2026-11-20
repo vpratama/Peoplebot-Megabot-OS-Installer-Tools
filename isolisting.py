@@ -493,27 +493,29 @@ def generate_pxe_menu():
         iso_path = os.path.join(ISO_DIR, iso)
         size_mb = os.path.getsize(iso_path) / (1024 * 1024)
 
+        # Default: extract ISO for low-RAM boot (always available)
+        safe_name = extract_iso_if_needed(iso)
+        boot_info = detect_boot_params(safe_name)
+        if boot_info:
+            kernel_rel, append_args = boot_info
+            legacy_lines.extend([
+                f"LABEL iso_{idx}_extracted",
+                f"    MENU LABEL {iso} (Low-RAM Extracted)",
+                f"    KERNEL {kernel_rel}",
+                f"    APPEND {append_args}",
+                "",
+            ])
+
+        # If the ISO fits in RAM, also offer boot-to-ramdisk (memdisk)
         if size_mb <= MAX_MEMDISK_MB:
             legacy_lines.extend([
-                f"LABEL iso_{idx}",
+                f"LABEL iso_{idx}_memdisk",
                 f"    MENU LABEL {iso} (Memdisk - {int(size_mb)}MB)",
                 "    KERNEL memdisk",
                 f"    INITRD isos/{iso}",
                 "    APPEND iso raw",
                 "",
             ])
-        else:
-            safe_name = extract_iso_if_needed(iso)
-            boot_info = detect_boot_params(safe_name)
-            if boot_info:
-                kernel_rel, append_args = boot_info
-                legacy_lines.extend([
-                    f"LABEL iso_{idx}",
-                    f"    MENU LABEL {iso} (Low-RAM Extracted)",
-                    f"    KERNEL {kernel_rel}",
-                    f"    APPEND {append_args}",
-                    "",
-                ])
 
     legacy_lines.extend([
         "",
