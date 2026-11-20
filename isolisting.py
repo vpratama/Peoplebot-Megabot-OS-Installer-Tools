@@ -54,6 +54,9 @@ UEFI_URL_SHIM  = os.getenv("UEFI_SHIM_URL",
     "https://mirrors.kernel.org/archlinux/extra/os/x86_64/shim-16.1-1-any.pkg.tar.zst")
 UEFI_URL_GRUB  = os.getenv("UEFI_GRUB_URL",
     "http://archive.ubuntu.com/ubuntu/pool/main/g/grub2-signed/grub-efi-amd64-signed_1.215+2.14-2ubuntu1_amd64.deb")
+# Legacy BIOS bootloader URL
+
+# Legacy BIOS bootloader URL
 
 INTERFACE   = os.getenv("PXE_INTERFACE", "enp45s0")
 SERVER_IP   = os.getenv("PXE_SERVER_IP", "192.168.254.2")
@@ -357,10 +360,17 @@ def ensure_boot_files():
 
     if legacy_missing:
         print(f"\nMissing legacy BIOS files: {', '.join(legacy_missing)}")
-        print("Install from your distribution's package:")
-        print("  Debian/Ubuntu: sudo apt install syslinux-common ipxe-qemu")
-        print("  Fedora/RHEL:   sudo dnf install syslinux ipxe")
-        print("  Arch:          sudo pacman -S syslinux ipxe")
+        # Try to copy pxelinux.0 from system syslinux
+        system_px = "/usr/lib/syslinux/bios/pxelinux.0"
+        if os.path.isfile(system_px) and os.path.getsize(system_px) > 1024:
+            import shutil
+            shutil.copy2(system_px, os.path.join(TFTP_DIR, "pxelinux.0"))
+            print(f"  ↓ Copied pxelinux.0 from system syslinux")
+        else:
+            print("Install from your distribution's package:")
+            print("  Debian/Ubuntu: sudo apt install syslinux-common")
+            print("  Fedora/RHEL:   sudo dnf install syslinux")
+            print("  Arch:          sudo pacman -S syslinux")
 
     # ── iPXE / UEFI files (self-contained, working sources) ──────────────────
     # Direct URLs where available; Arch packages otherwise (with member path).
