@@ -62,5 +62,3 @@ extracted/
 # Boot menu config (auto-generated)
 pxelinux.cfg/
 
-# Boot menu logo
-logo.bmp

@@ -32,7 +32,7 @@ tftp/
 │   └── default             # Menu boot Legacy BIOS (dihasilkan otomatis)
 │
 ├── uefi_menu.txt           # Menu iPXE untuk UEFI (dihasilkan otomatis)
-├── logo.bmp                # Logo boot menu Legacy BIOS (MENU BACKGROUND)
+├── ![logo.bmp](logo.bmp)   # Logo boot menu Legacy BIOS (MENU BACKGROUND)
 │
 ├── dnsmasq                 # Binary dnsmasq (bundled, tidak perlu install)
 ├── dnsmasq.leases          # File lease DHCP (dibuat saat runtime)
