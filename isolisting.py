@@ -52,6 +52,8 @@ UEFI_URL_IPXE  = os.getenv("UEFI_IPXE_URL",
     "https://mirrors.kernel.org/archlinux/extra/os/x86_64/ipxe-2.0.0-2-x86_64.pkg.tar.zst")
 UEFI_URL_SHIM  = os.getenv("UEFI_SHIM_URL",
     "https://mirrors.kernel.org/archlinux/extra/os/x86_64/shim-16.1-1-any.pkg.tar.zst")
+UEFI_URL_GRUB  = os.getenv("UEFI_GRUB_URL",
+    "http://archive.ubuntu.com/ubuntu/pool/main/g/grub2-signed/grub-efi-amd64-signed_1.215+2.14-2ubuntu1_amd64.deb")
 
 INTERFACE   = os.getenv("PXE_INTERFACE", "enp45s0")
 SERVER_IP   = os.getenv("PXE_SERVER_IP", "192.168.254.2")
@@ -197,33 +199,65 @@ def download_file(url, dest, member=None):
     """Download a file from URL to destination.
 
     If `member` is set and the URL points to a .tar.zst / .tar.gz / .tar.xz
-    package, extract that member from the archive into `dest` instead of
-    saving the raw download.
+    or .deb package, extract that member into `dest` instead of saving the
+    raw download.
     """
     print(f"Downloading {os.path.basename(dest)} from {url}...")
-    is_archive = url.endswith((".tar.zst", ".tar.xz", ".tar.gz", ".tgz"))
+    is_archive = url.endswith((".tar.zst", ".tar.xz", ".tar.gz", ".tgz", ".deb"))
     tmp = dest + ".download"
     try:
-        urllib.request.urlretrieve(url, tmp)
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "Mozilla/5.0 (PXE-Installer-Tools)"}
+        )
+        with urllib.request.urlopen(req, timeout=120) as response, \
+             open(tmp, "wb") as out:
+            shutil.copyfileobj(response, out)
         if is_archive and member:
-            import tarfile
-            tmpdir = dest + ".extract"
-            shutil.rmtree(tmpdir, ignore_errors=True)
-            os.makedirs(tmpdir, exist_ok=True)
-            try:
-                with tarfile.open(tmp, "r:*") as tf:
-                    matches = [m for m in tf.getmembers()
-                               if m.isfile() and m.name.endswith("/" + member)]
-                    if not matches:
-                        raise FileNotFoundError(member)
-                    tf.extract(matches[0], tmpdir)
-                extracted = os.path.join(tmpdir, matches[0].name)
-                shutil.copy2(extracted, dest)
+            if url.endswith(".deb"):
+                # .deb is an ar archive containing data.tar.{xz,zst,gz}
+                ar_list = subprocess.run(
+                    ["ar", "t", tmp], capture_output=True, text=True, check=True
+                ).stdout.split()
+                data_members = [m for m in ar_list if m.startswith("data.tar.")]
+                if not data_members:
+                    raise FileNotFoundError("data.tar.* inside .deb")
+                data_member = data_members[0]
+                tmpdir = dest + ".extract"
                 shutil.rmtree(tmpdir, ignore_errors=True)
-                os.remove(tmp)
-            except Exception:
+                os.makedirs(tmpdir, exist_ok=True)
+                try:
+                    data_tar = os.path.join(tmpdir, data_member)
+                    with open(data_tar, "wb") as fh:
+                        subprocess.run(
+                            ["ar", "p", tmp, data_member], stdout=fh, check=True
+                        )
+                    subprocess.run(
+                        ["tar", "-xf", data_tar, "-C", tmpdir, member], check=True
+                    )
+                    extracted = os.path.join(tmpdir, member.lstrip("./"))
+                    shutil.copy2(extracted, dest)
+                finally:
+                    shutil.rmtree(tmpdir, ignore_errors=True)
+                    os.remove(tmp)
+            else:
+                import tarfile
+                tmpdir = dest + ".extract"
                 shutil.rmtree(tmpdir, ignore_errors=True)
-                raise
+                os.makedirs(tmpdir, exist_ok=True)
+                try:
+                    with tarfile.open(tmp, "r:*") as tf:
+                        matches = [m for m in tf.getmembers()
+                                   if m.isfile() and m.name.endswith("/" + member)]
+                        if not matches:
+                            raise FileNotFoundError(member)
+                        tf.extract(matches[0], tmpdir)
+                    extracted = os.path.join(tmpdir, matches[0].name)
+                    shutil.copy2(extracted, dest)
+                    shutil.rmtree(tmpdir, ignore_errors=True)
+                    os.remove(tmp)
+                except Exception:
+                    shutil.rmtree(tmpdir, ignore_errors=True)
+                    raise
         else:
             shutil.move(tmp, dest)
 
@@ -337,6 +371,8 @@ def ensure_boot_files():
         "ipxe.efi":      (UEFI_URL_IPXE, "ipxe/x86_64/ipxe.efi"),
         "shimx64.efi":   (UEFI_URL_SHIM, "shim/shimx64.efi"),
         "mmx64.efi":     (UEFI_URL_SHIM, "shim/mmx64.efi"),
+        "grubx64.efi":   (UEFI_URL_GRUB,
+                          "./usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed"),
     }
     for fname, (url, member) in efi_map.items():
         path = os.path.join(TFTP_DIR, fname)
@@ -376,8 +412,8 @@ def extract_iso_if_needed(iso_name):
 
 def detect_boot_params(safe_name):
     base_dir = os.path.join(EXTRACT_DIR, safe_name)
-    kernel_rel = None
-    initrd_rel = None
+    kernel_candidates = []
+    initrd_candidates = []
     squashfs_rel = None
 
     for root, _, files in os.walk(base_dir):
@@ -385,11 +421,30 @@ def detect_boot_params(safe_name):
             rel = os.path.relpath(os.path.join(root, f), TFTP_DIR)
             fl = f.lower()
             if fl.startswith("vmlinuz") or fl == "linux":
-                kernel_rel = rel
+                kernel_candidates.append(rel)
             elif fl.startswith("initrd"):
-                initrd_rel = rel
+                initrd_candidates.append(rel)
             elif fl == "filesystem.squashfs":
                 squashfs_rel = rel
+
+    # Skip bootloaders meant for other purposes (Xen domU, GTK installer,
+    # package pools) and prefer the standard install/live directories.
+    def pick(candidates):
+        bad = ("/pool/", "/xen/", "/gtk/", "/efi/", "/boot/grub/")
+        good = [c for c in candidates if not any(b in c.lower() for b in bad)]
+        if not good:
+            good = candidates
+        preferred = ("live", "casper", "install.amd", "install.386")
+        def rank(c):
+            low = c.lower()
+            for i, pref in enumerate(preferred):
+                if "/" + pref + "/" in low:
+                    return (i, len(c))
+            return (len(preferred), len(c))
+        return sorted(good, key=rank)[0] if good else None
+
+    kernel_rel = pick(kernel_candidates)
+    initrd_rel = pick(initrd_candidates)
 
     if not (kernel_rel and initrd_rel):
         return None
@@ -397,12 +452,12 @@ def detect_boot_params(safe_name):
     if squashfs_rel:
         append = (
             f"initrd={initrd_rel} boot=live union=overlay config components"
-            " quiet noswap nomodeset"
+            " quiet noswap nomodeset acpi=off"
             f" fetch=http://{SERVER_IP}:{HTTP_PORT}/{squashfs_rel}"
         )
         return kernel_rel, append
 
-    return kernel_rel, f"initrd={initrd_rel} lowmem/low=1"
+    return kernel_rel, f"initrd={initrd_rel} lowmem/low=1 acpi=off"
 
 
 def generate_pxe_menu():

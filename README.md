@@ -47,7 +47,8 @@ tftp/
     ├── undionly.kpxe       # iPXE undionly (Legacy)
     ├── ipxe.efi            # iPXE UEFI
     ├── shimx64.efi         # UEFI Secure Boot shim
-    └── mmx64.efi           # MOK manager (Secure Boot)
+    ├── mmx64.efi           # MOK manager (Secure Boot)
+    └── grubx64.efi         # GRUB UEFI (signed, untuk chain boot alternatif)
 ```
 
 ---
@@ -139,6 +140,7 @@ Tekan **Ctrl+C** untuk menghentikan semua layanan dengan bersih.
 | `CFG_FILE_NAME` | `default` | Nama file menu PXE |
 | `UEFI_IPXE_URL` | Arch Linux ipxe package | Sumber unduh `ipxe.efi` |
 | `UEFI_SHIM_URL` | Arch Linux shim package | Sumber unduh `shimx64.efi` |
+| `UEFI_GRUB_URL` | Ubuntu signed grub package | Sumber unduh `grubx64.efi` (file `.deb`) |
 | `PXE_INTERFACE` | `enp45s0` | Interface jaringan untuk dnsmasq |
 | `PXE_SERVER_IP` | `192.168.254.2` | IP server TFTP/HTTP |
 | `PXE_DHCP_START` | `192.168.254.100` | Awal rentang DHCP |
@@ -157,7 +159,7 @@ Tekan **Ctrl+C** untuk menghentikan semua layanan dengan bersih.
 | **Legacy BIOS** | `pxelinux.0`, `menu.c32`, `memdisk` | Boot via syslinux |
 | **Modern BIOS** | `ipxe.pxe`, `undionly.kpxe` | Boot via iPXE |
 | **UEFI BIOS** | `ipxe.efi` | Boot via iPXE UEFI |
-| **UEFI Secure Boot** | `shimx64.efi` + `mmx64.efi` + `ipxe.efi` | shim → iPXE (tanpa GRUB) |
+| **UEFI Secure Boot** | `shimx64.efi` + `mmx64.efi` + `ipxe.efi` + `grubx64.efi` | shim → iPXE / shim → GRUB |
 
 > Semua file boot di atas sudah tersedia di folder proyek dan akan diunduh otomatis jika hilang.
 
@@ -198,7 +200,7 @@ ss -tlnp | grep 8085
 Hapus file tersebut, lalu jalankan ulang skrip — file akan diunduh ulang otomatis:
 
 ```bash
-rm -f ipxe.efi shimx64.efi mmx64.efi
+rm -f ipxe.efi shimx64.efi mmx64.efi grubx64.efi
 python3 isolisting.py
 ```
 
