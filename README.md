@@ -32,6 +32,7 @@ tftp/
 │   └── default             # Menu boot Legacy BIOS (dihasilkan otomatis)
 │
 ├── uefi_menu.txt           # Menu iPXE untuk UEFI (dihasilkan otomatis)
+├── logo.bmp                # Logo boot menu Legacy BIOS (MENU BACKGROUND)
 │
 ├── dnsmasq                 # Binary dnsmasq (bundled, tidak perlu install)
 ├── dnsmasq.leases          # File lease DHCP (dibuat saat runtime)
@@ -156,7 +157,7 @@ Tekan **Ctrl+C** untuk menghentikan semua layanan dengan bersih.
 
 | Jenis BIOS | File yang Dibutuhkan | Keterangan |
 |------------|----------------------|------------|
-| **Legacy BIOS** | `pxelinux.0`, `menu.c32`, `memdisk` | Boot via syslinux |
+| **Legacy BIOS** | `pxelinux.0`, `menu.c32`, `memdisk`, `logo.bmp` | Boot via syslinux |
 | **Modern BIOS** | `ipxe.pxe`, `undionly.kpxe` | Boot via iPXE |
 | **UEFI BIOS** | `ipxe.efi` | Boot via iPXE UEFI |
 | **UEFI Secure Boot** | `shimx64.efi` + `mmx64.efi` + `ipxe.efi` + `grubx64.efi` | shim → iPXE / shim → GRUB |

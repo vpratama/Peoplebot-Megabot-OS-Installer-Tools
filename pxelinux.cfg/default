@@ -2,6 +2,7 @@ UI menu.c32
 PROMPT 0
 TIMEOUT 100
 
+MENU BACKGROUND logo.bmp
 MENU TITLE Peoplebot-Megabot OS Installer (Legacy BIOS)
 
 LABEL local

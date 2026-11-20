@@ -19,10 +19,7 @@ mypy.ini
 pyproject.toml
 .tox/
 .coverage
-.hypothesis/
-.pytest_cache/
-.mypy_cache/
-ruff_cache/
+.ruff_cache/
 sedimental/
 
 # Environments
@@ -32,14 +29,14 @@ venv/
 ENV/
 env/
 
+# Runtime files
+dnsmasq.leases
+
 # Editors
 .vim/
 *.swp
 *.swo
 *~
-
-# Extracted ISOs
-extracted/
 
 # IDEs
 .idea/
@@ -58,4 +55,12 @@ htmlcov/
 .pytest_cache/
 .tox/
 .coverage
-```
+
+# Extracted ISOs
+extracted/
+
+# Boot menu config (auto-generated)
+pxelinux.cfg/
+
+# Boot menu logo
+logo.bmp
