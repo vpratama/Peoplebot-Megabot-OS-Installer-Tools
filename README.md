@@ -1,4 +1,11 @@
 # Peoplebot-Megabot OS Installer Tools
+
+## Cara Mengakses Repository
+
+```bash
+git clone git@github.com:vpratama/Peoplebot-Megabot-OS-Installer-Tools.git
+```
+
 <p align="center">
   <img src="https://github.com/vpratama/Peoplebot-Megabot-OS-Installer-Tools/blob/main/logo.bmp?raw=true" alt="Peoplebot-Megabot"/>
 </p>
@@ -213,6 +220,149 @@ python isolisting.py
 ## Lisensi & Catatan
 
 Proyek ini dibuat untuk kebutuhan deployment sistem Peoplebot dan Megabot. File ISO dan komponen boot (syslinux, iPXE, shim, dnsmasq) tunduk pada lisensi masing-masing.
+
+---
+
+## Lisensi & Catatan
+
+Proyek ini dibuat untuk kebutuhan deployment sistem Peoplebot dan Megabot. File ISO dan komponen boot (syslinux, iPXE, shim, dnsmasq) tunduk pada lisensi masing-masing.
+
+## Platform Support
+
+### Linux (Native)
+Proyek ini dirancang untuk dijalankan secara nativa di sistem Linux. Semua file dan binary yang diperlukan sudah termasuk di proyek:
+
+- **Menyukai distribusi Linux** berpusat pada Arch/Ubuntu/Debian-based
+- **Binary dnsmasq** sudah bundling (tidak perlu install eksternal)
+- **Python script** `isolisting.py` berjalan dengan Python 3 standar
+- **TFTP/HTTP server** melalui Python built-in
+- **Konfigurasi network** melalui ip command (seperti `ip link`, `ip addr`)
+
+**Untuk menjalankan di Linux:**
+```bash
+# Pastikan Python 3 tersedia
+python --version
+
+# Jalankan skrip
+python isolisting.py
+```
+
+### Windows (via WSL2)
+Proyek ini dapat dijalankan di Windows menggunakan **Windows Subsystem for Linux (WSL2)**. Ini adalah cara terbaik untuk menjalankan proyek ini di Windows:
+
+**Persyaratan:**
+- Windows 10/11 dengan WSL2 didukung
+- Akses administrator untuk mengkonfigurasi jaringan
+
+**Cara Menginstal:**
+```powershell
+# Aktifkan WSL jika belum
+wsl --install
+
+# Atau install dnsmasq jika perlu di dalam WSL
+# di PowerShell sebagai Admin:
+wsl --update
+
+# Clone/Download proyek ke folder WSL-accessible location
+# Contoh: di dalam folder home di WSL
+git clone https://github/your-repo/peoplebot-pxe-installer.git
+cd peoplebot-pxe-installer
+
+# Jalankan skrip melalui WSL
+./isolisting.py
+```
+
+**Catatan Penting untuk Windows/WSL:**
+- Konfigurasi IP statis perlu di-set di dalam WSL session, bukan dari PowerShell
+- Gunakan `ip addr add ...` dan `ip link set ...` di dalam WSL terminal
+- Port forwarding mungkin diperlukan jika mengakses dari luar WSL
+- File ISO letakkan di folder yang dapat diakses oleh both Windows dan WSL (seperti `\\wsl$\distro\home\user\tftp\isos`)
+
+### Perbedaan Utama Antara Platform:
+
+| Fitur | Linux (Native) | Windows (WSL2) |
+|-------|---------------|----------------|
+| **Binary dnsmasq** | Sudah termasuk, langsung jalan | Sudah termasuk, jalan di WSL |
+| **Konfigurasi jaringan** | `ip` command langsung | `ip` command di WSL terminal |
+| **Port akses** | Langsung dari host | Perlu cek IP WSL (`ip addr show eth0`) |
+| **File ISO** | Path absolut langsung | Gunakan `\\wsl$\` path atau folder ter-share |
+| **Pengelolaan layanan** | `Ctrl+C` menghentikan semuanya | `Ctrl+C` di WSL terminal |
+
+### Menjalankan di Dua Platform Secara Bersamaan:
+1. Simpan folder proyek di location yang diakses WSL (seperti `~/tftp/` di Ubuntu di WSL)
+2. Pastikan file ISO juga diakses dari location yang sama
+3. Jalankan `python isolisting.py` di WSL terminal
+4. Akses boot menu dari klien PXE di jaringan lokal
+
+3. Jalankan `python isolisting.py` di WSL terminal
+4. Akses boot menu dari klien PXE di jaringan lokal
+
+---
+
+## Spesifikasi & Requirement
+
+### Requirements for Running This Project
+
+#### General Requirements
+- **Python 3.8+** - Required to run `isolisting.py` script
+- **dnsmasq binary** - Bundled within project (no host installation required)
+- **Disk Space** - Approximately 2GB free space for ISO files and extracted content
+- **Network Interface** - Static IP recommended on PXE server interface
+
+#### Linux (Native) Requirements
+- **Operating System**: Linux distribution (Arch, Ubuntu, Debian, CentOS, etc.)
+- **Python**: `python3` package installed
+- **IP Command**: `iproute2` package for network configuration (`ip link`, `ip addr`)
+- **Permissions**: Root/sudo access for dnsmasq and network configuration
+- **Dependencies**: None additional (bundled dnsmasq is statically linked)
+
+**Installation on Linux:**
+```bash
+# Debian/Ubuntu-based
+sudo apt update
+sudo apt install -y python3 iproute2
+
+# Arch-based
+sudo pacman -S --needed python3 iproute2
+
+# Verification
+python3 --version
+ip --version
+```
+
+#### Windows (via WSL2) Requirements
+- **Windows 10/11** with WSL2 support enabled
+- **WSL2 Kernel** - Must be running WSL2 (not WSL1)
+- **Python 3** - Available inside WSL distribution
+- **Network Access** - Internet connection for downloading boot files if needed
+
+**Installation on Windows (WSL2):**
+```powershell
+# Enable WSL if not already enabled
+wsl --install
+
+# Restart computer after installation
+
+# Inside WSL terminal (Ubuntu):
+sudo apt update
+sudo apt install -y iproute2
+
+# Verification inside WSL
+python3 --version
+ip --version
+```
+
+#### File ISO Requirements
+- **Format**: `.iso` files compatible with PXE boot
+- **Size**: 
+  - ≤ 300 MB: Boot via Memdisk (loaded into RAM)
+  - > 300 MB: Boot via Low-RAM Extracted mode (HTTP streaming)
+- **Minimum**: 1 ISO file required for boot menu to display options
+
+#### Boot Menu Logo
+- **logo.bmp** - Boot menu background image (included in project)
+- Placed in project root directory
+- Configured via `MENU BACKGROUND logo.bmp` in `pxelinux.cfg/default`
 
 ---
 
