@@ -27,7 +27,6 @@ Skrip `isolisting.py` secara otomatis memindai folder `isos/`, menghasilkan menu
 ## Struktur Folder
 
 ```
-tftp/
 ├── isolisting.py           # Skrip utama: generator menu + server PXE
 ├── .env                    # Konfigurasi aktif (nilai nyata)
 ├── .env.example            # Template konfigurasi (placeholder)

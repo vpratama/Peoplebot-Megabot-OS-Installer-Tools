@@ -62,3 +62,6 @@ extracted/
 # Boot menu config (auto-generated)
 pxelinux.cfg/
 
+# UEFI menu (auto-generated)
+uefi_menu.txt
+
